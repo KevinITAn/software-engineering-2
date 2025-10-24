@@ -12,19 +12,37 @@ public class MyList<T> implements Publisher {
             throw new IllegalArgumentException("Non si puù inserire null");
         innerList.add(ob);
     }
+
     int length(){
         return innerList.size();
     }
+
     T getElement(int pos){
         if(pos >= length() || pos<0)
-            throw new IndexOutOfBoundsException("Indice < 0 || maggiore degli elementi presenti");
+            throw new IndexOutOfBoundsException("Index out of bounds!");
         return innerList.get(pos);
     }
+
     MyIterator<T> getForwardIterator(){
         return new ForwardIterator<>(innerList) ;
     }
+
     MyIterator<T> getBackwardIterator(){
         return new BackwardIterator<>(innerList);
+    }
+
+    public void setValue(T newValue, int index){
+        if(index>=length() || index<0)
+            throw new IndexOutOfBoundsException("index out of bounds!");
+        innerList.set(index,newValue);
+        //notify subscriber
+        notifySubscribers();
+    }
+
+    public void setValue(T newValue, MyIterator<T> iterator){
+        if(iterator==null)
+            throw new NullPointerException("Iterator is null");
+        setValue(newValue, iterator.getIndex());
     }
 
     @Override
@@ -36,9 +54,9 @@ public class MyList<T> implements Publisher {
 
     @Override
     public void unSubscribe(Subscriber subscriber) {
-        if(subscriber==null || subscribers.contains(subscriber))
+        if(subscriber==null)
             return;
-        subscribers.add(subscriber);
+        subscribers.remove(subscriber);
     }
 
     @Override

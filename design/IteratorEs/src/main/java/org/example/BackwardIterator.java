@@ -2,7 +2,7 @@ package org.example;
 
 import java.util.List;
 
-public class BackwardIterator<T> implements MyIterator<T>{
+public class BackwardIterator<T> implements MyIterator<T> {
 
     private int actualPos;
     private final List<T> internalList;
@@ -14,20 +14,25 @@ public class BackwardIterator<T> implements MyIterator<T>{
 
     @Override
     public void rewind() {
-        this.actualPos=0;
+        this.actualPos = internalList.size() - 1;
     }
 
     @Override
     public T nextElement() {
-        if(!hasMoreElements())
-            throw new RuntimeException("index out of bound");
-        actualPos++;
-        return internalList.get(actualPos);
+        if (!hasMoreElements())
+            throw new RuntimeException("index out of bounds");
+        T retElement = internalList.get(actualPos);
+        actualPos--;
+        return retElement;
     }
 
     @Override
     public boolean hasMoreElements() {
-        return internalList.size() == actualPos;
+        return actualPos >= 0;
     }
 
+    @Override
+    public int getIndex() {
+        return actualPos + 1;
+    }
 }

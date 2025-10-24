@@ -1,44 +1,107 @@
 package org.example;
-import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
 
-public class MyListTest {
-    MyList<Integer> testList=new MyList<>();
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class MyListTest {
+
+    private MyList<String> list;
 
     @BeforeEach
-    public void setup(){
-        testList=new MyList<>();
+    void setUp() {
+        list = new MyList<>();
     }
 
     @Test
-    public void testAddElement(){
-        assertThrows(IllegalArgumentException.class,()->testList.addElement(null));
-        testList.addElement(1);
-        assertEquals(1,testList.length());
+    void testAddElementAndLength() {
+        assertEquals(0, list.length());
+        list.addElement("A");
+        list.addElement("B");
+        assertEquals(2, list.length());
     }
 
     @Test
-    public void testLength(){
-        assertEquals(0,testList.length());
-        testList.addElement(1);
-        assertEquals(1,testList.length());
+    void testAddNullThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> list.addElement(null));
     }
 
     @Test
-    public void testGetElement(){
-        assertEquals(0,testList.length());
-        testList.addElement(1);
-        assertEquals(Integer.valueOf(1),testList.getElement(0));
-        //test exception
-        assertThrows(IndexOutOfBoundsException.class,()->testList.getElement(-1));
-        assertThrows(IndexOutOfBoundsException.class,()->testList.getElement(10));
+    void testGetElementValidIndex() {
+        list.addElement("X");
+        list.addElement("Y");
+        assertEquals("X", list.getElement(0));
+        assertEquals("Y", list.getElement(1));
     }
 
+    @Test
+    void testGetElementInvalidIndex() {
+        list.addElement("Z");
+        assertThrows(IndexOutOfBoundsException.class, () -> list.getElement(5));
+        assertThrows(IndexOutOfBoundsException.class, () -> list.getElement(-1));
+    }
 
+    @Test
+    void testSetValueByIndex() {
+        list.addElement("A");
+        list.addElement("B");
+        list.setValue("C", 1);
+        assertEquals("C", list.getElement(1));
+    }
 
+    @Test
+    void testSetValueByInvalidIndexThrows() {
+        list.addElement("A");
+        assertThrows(IndexOutOfBoundsException.class, () -> list.setValue("X", 10));
+    }
 
+    @Test
+    void testSetValueByIterator() {
+        list.addElement("A");
+        list.addElement("B");
+        MyIterator<String> it = list.getForwardIterator();
+        it.nextElement(); // index 0
+        list.setValue("Z", it);
+        assertEquals("Z", list.getElement(0));
+    }
 
+    @Test
+    void testSetValueNullIteratorThrows() {
+        assertThrows(NullPointerException.class, () -> list.setValue("X", null));
+    }
 
+    @Test
+    void testNotifySubscribersIsCalled() {
+        list.addElement("A");
+        AtomicBoolean wasNotified = new AtomicBoolean(false);
+        Subscriber sub = () -> wasNotified.set(true);
+
+        list.subscribe(sub);
+        list.setValue("B", 0);
+
+        assertTrue(wasNotified.get(), "Subscriber should have been notified");
+    }
+
+    @Test
+    void testSubscribeNullDoesNothing() {
+        assertDoesNotThrow(() -> list.subscribe(null));
+    }
+
+    @Test
+    void testUnsubscribeNullDoesNothing() {
+        assertDoesNotThrow(() -> list.unSubscribe(null));
+    }
+
+    @Test
+    void testForwardIteratorNotNull() {
+        list.addElement("A");
+        assertNotNull(list.getForwardIterator());
+    }
+
+    @Test
+    void testBackwardIteratorNotNull() {
+        list.addElement("A");
+        assertNotNull(list.getBackwardIterator());
+    }
 }
