@@ -30,48 +30,81 @@ class MyListTest {
         System.setOut(originalOut);
     }
 
-    //TEST ITERATOR PATTERN
-
     @Test
-    void testAddElementAndLength() {
-        assertEquals(0, list.length());
+    void testAddElement() {
         list.addElement("A");
         list.addElement("B");
         assertEquals(2, list.length());
     }
 
     @Test
-    void testAddNullThrowsException() {
+    void testAddElementNullThrowsException() {
         assertThrows(IllegalArgumentException.class, () -> list.addElement(null));
     }
 
     @Test
-    void testGetElementValidIndex() {
-        list.addElement("X");
-        list.addElement("Y");
-        assertEquals("X", list.getElement(0));
-        assertEquals("Y", list.getElement(1));
+    void testLength() {
+        assertEquals(0, list.length());
+        list.addElement("A");
+        assertEquals(1, list.length());
     }
 
     @Test
-    void testGetElementInvalidIndex() {
-        list.addElement("Z");
-        assertThrows(IndexOutOfBoundsException.class, () -> list.getElement(5));
+    void testGetElementValid() {
+        list.addElement("A");
+        list.addElement("B");
+        assertEquals("A", list.getElement(0));
+        assertEquals("B", list.getElement(1));
+    }
+
+    @Test
+    void testGetElementIndexOutOfBoundsHigh() {
+        list.addElement("A");
+        assertThrows(IndexOutOfBoundsException.class, () -> list.getElement(1));
+    }
+
+    @Test
+    void testGetElementIndexOutOfBoundsLow() {
+        list.addElement("A");
         assertThrows(IndexOutOfBoundsException.class, () -> list.getElement(-1));
+    }
+
+    @Test
+    void testGetForwardIteratorNotNull() {
+        assertNotNull(list.getForwardIterator());
+    }
+
+    @Test
+    void testGetBackwardIteratorNotNull() {
+        assertNotNull(list.getBackwardIterator());
     }
 
     @Test
     void testSetValueByIndex() {
         list.addElement("A");
-        list.addElement("B");
-        list.setValue("C", 1);
-        assertEquals("C", list.getElement(1));
+        list.setValue("B", 0);
+        assertEquals("B", list.getElement(0));
     }
 
     @Test
-    void testSetValueByInvalidIndexThrows() {
+    void testSetValueByIndexNotifiesSubscribers() {
         list.addElement("A");
-        assertThrows(IndexOutOfBoundsException.class, () -> list.setValue("X", 10));
+        list.subscribe(testClient);
+        list.setValue("B", 0);
+        assertEquals("Notify arrived!", outContent.toString().trim());
+    }
+
+    @Test
+    void testSetValueByIndexThrowsException() {
+        assertThrows(IndexOutOfBoundsException.class, () -> list.setValue("B", 0));
+    }
+
+    @Test
+    void testSetValueByIndexThrowsExceptionAndDoesNotNotify() {
+        list.addElement("A");
+        list.subscribe(testClient);
+        assertThrows(IndexOutOfBoundsException.class, () -> list.setValue("B", 10));
+        assertEquals("", outContent.toString().trim());
     }
 
     @Test
@@ -79,14 +112,35 @@ class MyListTest {
         list.addElement("A");
         list.addElement("B");
         MyIterator<String> it = list.getForwardIterator();
-        it.nextElement();
-        list.setValue("Z", it);
-        assertEquals("Z", list.getElement(0));
+        it.nextElement(); // it.getIndex() ora ritorna 0
+
+        list.setValue("C", it);
+        assertEquals("C", list.getElement(0));
     }
 
     @Test
-    void testSetValueNullIteratorThrows() {
-        assertThrows(NullPointerException.class, () -> list.setValue("X", null));
+    void testSetValueByIteratorNotifiesSubscribers() {
+        list.addElement("A");
+        MyIterator<String> it = list.getForwardIterator();
+        it.nextElement(); // it.getIndex() ora ritorna 0
+
+        list.subscribe(testClient);
+        list.setValue("C", it);
+
+        assertEquals("Notify arrived!", outContent.toString().trim());
+    }
+
+    @Test
+    void testSetValueByNullIteratorThrowsException() {
+        assertThrows(NullPointerException.class, () -> list.setValue("A", null));
+    }
+
+    @Test
+    void testSubscribe() {
+        list.addElement("A");
+        list.subscribe(testClient);
+        list.setValue("B", 0);
+        assertFalse(outContent.toString().trim().isEmpty());
     }
 
     @Test
@@ -95,59 +149,26 @@ class MyListTest {
     }
 
     @Test
-    void testUnsubscribeNullDoesNothing() {
-        assertDoesNotThrow(() -> list.unSubscribe(null));
-    }
-
-    @Test
-    void testForwardIteratorNotNull() {
-        list.addElement("A");
-        assertNotNull(list.getForwardIterator());
-    }
-
-    @Test
-    void testBackwardIteratorNotNull() {
-        list.addElement("A");
-        assertNotNull(list.getBackwardIterator());
-    }
-
-    //TEST OBSERVER PATTERN
-
-    @Test
-    void testSetValueNotifiesSubscriber() {
-        list.addElement("A");
-        list.subscribe(testClient);
-        list.setValue("B", 0);
-
-        assertEquals("Notify arrived!", outContent.toString().trim());
-    }
-
-    @Test
-    void testAddElementDoesNotNotify() {
-        list.subscribe(testClient);
-        list.addElement("B");
-
-        assertEquals("", outContent.toString().trim());
-    }
-
-    @Test
-    void testUnsubscribeStopsNotifications() {
+    void testUnSubscribe() {
         list.addElement("A");
         list.subscribe(testClient);
         list.unSubscribe(testClient);
         list.setValue("B", 0);
-
-        assertEquals("", outContent.toString().trim());
+        assertTrue(outContent.toString().trim().isEmpty());
     }
 
     @Test
-    void testMultipleSubscribersReceiveNotify() {
+    void testUnSubscribeNullDoesNothing() {
+        assertDoesNotThrow(() -> list.unSubscribe(null));
+    }
+
+    @Test
+    void testNotifySubscribersIsCalledBySetValue() {
         list.addElement("A");
-
         Client client2 = new Client();
-
         list.subscribe(testClient);
         list.subscribe(client2);
+
         list.setValue("B", 0);
 
         String expectedOutput = "Notify arrived!" + System.lineSeparator() + "Notify arrived!";
@@ -155,14 +176,9 @@ class MyListTest {
     }
 
     @Test
-    void testSetValueThrowsExceptionAndDoesNotNotify() {
-        list.addElement("A");
+    void testAddElementDoesNotNotifySubscribers() {
         list.subscribe(testClient);
-
-        assertThrows(IndexOutOfBoundsException.class, () -> {
-            list.setValue("X", 10);
-        });
-
+        list.addElement("A");
         assertEquals("", outContent.toString().trim());
     }
 }
