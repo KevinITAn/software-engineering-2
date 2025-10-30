@@ -6,9 +6,6 @@ import java.io.IOException;
 
 public class Client implements Subscriber {
 
-    /**
-     * Metodo main per testare la lettura di un file e l'iterazione inversa.
-     */
     public static void main(String[] args) {
         MyList<String> fileLines = new MyList<>();
         String fileName = "input.txt";

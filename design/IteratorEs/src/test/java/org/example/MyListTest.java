@@ -1,18 +1,36 @@
 package org.example;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 import static org.junit.jupiter.api.Assertions.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class MyListTest {
 
     private MyList<String> list;
+    private Client testClient;
+
+    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private static final PrintStream originalOut = System.out;
 
     @BeforeEach
     void setUp() {
         list = new MyList<>();
+        testClient = new Client();
+        outContent.reset();
+        System.setOut(new PrintStream(outContent));
     }
+
+    @AfterEach
+    void tearDown() {
+        System.setOut(originalOut);
+    }
+
+    //TEST ITERATOR PATTERN
 
     @Test
     void testAddElementAndLength() {
@@ -61,7 +79,7 @@ class MyListTest {
         list.addElement("A");
         list.addElement("B");
         MyIterator<String> it = list.getForwardIterator();
-        it.nextElement(); // index 0
+        it.nextElement();
         list.setValue("Z", it);
         assertEquals("Z", list.getElement(0));
     }
@@ -69,18 +87,6 @@ class MyListTest {
     @Test
     void testSetValueNullIteratorThrows() {
         assertThrows(NullPointerException.class, () -> list.setValue("X", null));
-    }
-
-    @Test
-    void testNotifySubscribersIsCalled() {
-        list.addElement("A");
-        AtomicBoolean wasNotified = new AtomicBoolean(false);
-        Subscriber sub = () -> wasNotified.set(true);
-
-        list.subscribe(sub);
-        list.setValue("B", 0);
-
-        assertTrue(wasNotified.get(), "Subscriber should have been notified");
     }
 
     @Test
@@ -103,5 +109,60 @@ class MyListTest {
     void testBackwardIteratorNotNull() {
         list.addElement("A");
         assertNotNull(list.getBackwardIterator());
+    }
+
+    //TEST OBSERVER PATTERN
+
+    @Test
+    void testSetValueNotifiesSubscriber() {
+        list.addElement("A");
+        list.subscribe(testClient);
+        list.setValue("B", 0);
+
+        assertEquals("Notify arrived!", outContent.toString().trim());
+    }
+
+    @Test
+    void testAddElementDoesNotNotify() {
+        list.subscribe(testClient);
+        list.addElement("B");
+
+        assertEquals("", outContent.toString().trim());
+    }
+
+    @Test
+    void testUnsubscribeStopsNotifications() {
+        list.addElement("A");
+        list.subscribe(testClient);
+        list.unSubscribe(testClient);
+        list.setValue("B", 0);
+
+        assertEquals("", outContent.toString().trim());
+    }
+
+    @Test
+    void testMultipleSubscribersReceiveNotify() {
+        list.addElement("A");
+
+        Client client2 = new Client();
+
+        list.subscribe(testClient);
+        list.subscribe(client2);
+        list.setValue("B", 0);
+
+        String expectedOutput = "Notify arrived!" + System.lineSeparator() + "Notify arrived!";
+        assertEquals(expectedOutput, outContent.toString().trim());
+    }
+
+    @Test
+    void testSetValueThrowsExceptionAndDoesNotNotify() {
+        list.addElement("A");
+        list.subscribe(testClient);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> {
+            list.setValue("X", 10);
+        });
+
+        assertEquals("", outContent.toString().trim());
     }
 }
