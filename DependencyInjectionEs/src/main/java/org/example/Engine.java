@@ -2,7 +2,7 @@ package org.example;
 
 public class Engine implements IEngine{
     @Override
-    public int getWeigh() {
+    public int getWeight() {
         return 20;
     }
 }

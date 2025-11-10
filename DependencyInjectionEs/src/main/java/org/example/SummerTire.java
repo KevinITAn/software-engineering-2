@@ -2,7 +2,7 @@ package org.example;
 
 public class SummerTire implements ITire{
     @Override
-    public int getWeigh() {
+    public int getWeight() {
         return 1;
     }
 }
