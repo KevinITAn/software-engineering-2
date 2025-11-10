@@ -4,6 +4,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+
+//DP da implementare
+// decorator,observer,strategy
+
 public class Client implements Subscriber {
 
     public static void main(String[] args) {
