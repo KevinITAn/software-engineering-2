@@ -36,9 +36,9 @@ If you find errors or have improved solutions/alternative implementations for th
 
 ## 👤 Author & Context
 
-| Componente | Dettaglio |
+| Component | Detail |
 | :--- | :--- |
-| **🖥️ Autore** | Kevin Croce |
-| **🏫 Università** | SUPSI |
-| **📚 Corso** | Software Engineering 2 |
-| **📅 Semestre** | 5° Semestre Studente |
+| **🖥️ Author** | Kevin Croce |
+| **🏫 University** | SUPSI |
+| **📚 Course** | Software Engineering 2 |
+| **📅 Semester** | 5th Semester Student |
